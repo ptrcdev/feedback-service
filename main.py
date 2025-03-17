@@ -43,20 +43,26 @@ Please format your response as a list of clear, actionable recommendations with 
 """
 
     try:
-        # Call the OpenAI API in a separate thread so as not to block the event loop
-        response = await asyncio.to_thread(
-            lambda: client.chat.completions.create(model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an expert reviewer."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=300,
-            temperature=0.7)
-        )
-        feedback = response.choices[0].message.content.strip()
-        return AnalysisResponse(openai_feedback=feedback)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
+        response = await asyncio.wait_for(
+        asyncio.to_thread(
+            lambda: client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are an expert code reviewer."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=300,
+                temperature=0.7,
+            )
+        ),
+        timeout=30  # seconds, adjust as necessary
+    )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="OpenAI API call timed out.")
+
+    feedback = response.choices[0].message.content.strip()
+    return AnalysisResponse(openai_feedback=feedback)
+
 
 if __name__ == "__main__":
     import uvicorn
