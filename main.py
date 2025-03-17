@@ -25,7 +25,13 @@ class AnalysisResponse(BaseModel):
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_content(request: AnalysisRequest):
     prompt = f"""
-You are an expert code reviewer. Based on the following content and context, provide detailed feedback and suggestions.
+You are an expert code reviewer with deep knowledge of software engineering best practices, including design patterns, maintainability, readability, performance, and security. Analyze the following code snippet carefully and provide a detailed review that includes:
+
+- **Strengths:** What the code does well.
+- **Weaknesses:** Potential issues, such as poor naming, convoluted logic, or lack of error handling.
+- **Optimization Suggestions:** Improvements in structure, efficiency, or clarity.
+- **Refactoring Recommendations:** Suggestions for simplifying or reorganizing the code.
+- **Security & Best Practices:** Any potential security issues or deviations from best practices.
 
 Content:
 {request.content}
@@ -33,8 +39,9 @@ Content:
 Context:
 {request.context}
 
-Please provide your feedback in a clear, concise, and actionable manner.
+Please format your response as a list of clear, actionable recommendations with concise explanations.
 """
+
     try:
         # Call the OpenAI API in a separate thread so as not to block the event loop
         response = await asyncio.to_thread(
